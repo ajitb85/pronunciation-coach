@@ -1,25 +1,21 @@
-import sys
-import audioop
-sys.modules["pyaudioop"] = audioop
-
 import streamlit as st
 import tempfile
 import os
-from audiorecorder import audiorecorder
+from st_audiorec import st_audiorec
 from openai import OpenAI
-from dotenv import load_dotenv
 import json
-
+from dotenv import load_dotenv
 
 # ---------------------------
 # CONFIG & BRANDING
 # ---------------------------
 load_dotenv()
 
-api_key = os.environ.get("OPENAI_API_KEY")
-
+api_key = os.getenv("OPENAI_API_KEY")
+print(api_key)
 if not api_key:
-    raise Exception("OPENAI_API_KEY not set!")
+    st.error("❌ OPENAI_API_KEY not set in Hugging Face secrets!")
+    st.stop()
 
 client = OpenAI(api_key=api_key)
 
@@ -68,7 +64,6 @@ st.markdown("<div class='subtitle'>Sharpen your English speaking skills with ins
 # HELPER: Analyze Pronunciation
 # ---------------------------
 def analyze_pronunciation(audio_path):
-    # Step 1: Transcribe with Whisper
     with open(audio_path, "rb") as f:
         transcript = client.audio.transcriptions.create(
             model="whisper-1",
@@ -76,7 +71,6 @@ def analyze_pronunciation(audio_path):
         )
     text = transcript.text
 
-    # Step 2: Score with GPT
     scoring_prompt = f"""
     You are a pronunciation coach. Evaluate the following speech transcript:
 
@@ -137,25 +131,30 @@ if mode == "Upload Audio":
 
         st.audio(tmp_path)
         if st.button("🔍 Analyze Uploaded File"):
-            with st.spinner("🔵 Analyzing..."):
+            with st.spinner("�� Analyzing..."):
                 transcript, feedback = analyze_pronunciation(tmp_path)
             st.success("✅ Analysis complete!")    
             st.write("**Transcript:**", transcript)
             show_scores(feedback)
 
 # ---------------------------
-# RECORD MODE
+# RECORD MODE (audiorecorder)
 # ---------------------------
 elif mode == "Record Audio":
-    st.markdown("Click **Start Recording** to practice live. Stop anytime, then analyze your performance instantly.")
-
-    audio = audiorecorder("🎙️ Start Recording", "⏹ Stop Recording")
+    st.title("Audio Recorder")
+    audio = audiorecorder("🎙️ Click to record", "⏹ Click to stop recording")
 
     if len(audio) > 0:
-        st.audio(audio.export().read(), format="audio/wav")
+        # Play recorded audio in frontend
+        st.audio(audio.export().read())
+
+        # Save audio to temp file
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmpfile:
             audio.export(tmpfile.name, format="wav")
             tmpfile_path = tmpfile.name
+
+        # Show properties
+        st.write(f"Frame rate: {audio.frame_rate}, Frame width: {audio.frame_width}, Duration: {audio.duration_seconds} seconds")
 
         if st.button("🔍 Analyze Recorded Audio"):
             with st.spinner("🔵 Analyzing..."):
@@ -168,4 +167,5 @@ elif mode == "Record Audio":
 # Closing Note
 # ---------------------------
 st.markdown("---")
-#st.markdown("💡 *Tip: Use this tool before and after your learning module to track your improvement in pronunciation, fluency, and confidence!*")
+st.markdown("💡 *Tip: Use this tool before and after your learning module to track your improvement in pronunciation, fluency, and confidence!*")
+
