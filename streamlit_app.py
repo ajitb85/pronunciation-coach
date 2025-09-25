@@ -1,7 +1,7 @@
+from st_audiorec import st_audiorec
 import streamlit as st
 import tempfile
 import os
-from audiorecorder import audiorecorder
 from openai import OpenAI
 import json
 from dotenv import load_dotenv
@@ -140,20 +140,17 @@ if mode == "Upload Audio":
 # RECORD MODE (audiorecorder)
 # ---------------------------
 elif mode == "Record Audio":
-    st.title("Audio Recorder")
-    audio = audiorecorder("🎙️ Click to record", "⏹ Click to stop recording")
+    st.markdown("Click **Start Recording** below to practice live. Stop anytime, then analyze your performance instantly.")
 
-    if len(audio) > 0:
-        # Play recorded audio in frontend
-        st.audio(audio.export().read())
+    wav_audio_data = st_audiorec()
 
-        # Save audio to temp file
+    if wav_audio_data is not None:
+        # Save temp file
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmpfile:
-            audio.export(tmpfile.name, format="wav")
+            tmpfile.write(wav_audio_data)
             tmpfile_path = tmpfile.name
 
-        # Show properties
-        st.write(f"Frame rate: {audio.frame_rate}, Frame width: {audio.frame_width}, Duration: {audio.duration_seconds} seconds")
+        st.audio(wav_audio_data, format="audio/wav")
 
         if st.button("🔍 Analyze Recorded Audio"):
             with st.spinner("🔵 Analyzing..."):
