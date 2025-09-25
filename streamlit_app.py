@@ -1,7 +1,7 @@
 import streamlit as st
 import tempfile
 import os
-from st_audiorec import st_audiorec
+from audiorecorder import audiorecorder
 from openai import OpenAI
 import json
 from dotenv import load_dotenv
