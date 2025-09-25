@@ -12,7 +12,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 api_key = os.getenv("OPENAI_API_KEY")
-print(api_key)
 if not api_key:
     st.error("❌ OPENAI_API_KEY not set in Hugging Face secrets!")
     st.stop()
